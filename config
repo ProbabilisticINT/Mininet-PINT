@@ -1,0 +1,8 @@
+receiver_interface=h1-eth0
+max_bit_range=255
+global_hash_range=1000000
+receiver_ip=10.0.0.1
+sender_ip=10.0.0.0
+common_log=common_log
+total_packets=5000
+iterations=1
