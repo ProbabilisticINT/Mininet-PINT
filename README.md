@@ -48,6 +48,12 @@ path tracing for path length of 5.
 1. Python 3.7.5
 2. numpy (pip install numpy)
 
+## Setting up Python 3.7.5 in Mininet VM
+
+- Install Miniconda: https://docs.conda.io/en/latest/miniconda.html
+- Create a new Python 3.7.5 envronment.
+- Run PINT for delay quantiles in that environment.
+
 ## Steps to run PINT for delay quantiles
 
 - Generate delay data obtained from ns3 simulations.
