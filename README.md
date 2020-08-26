@@ -16,7 +16,7 @@ Create a Mininet topology to conduct path tracing on path size N.
 
 `python topo_allocator.py 5`
 
-where 5 indicates that path tracing needs to be conducted on five switches.
+where 5 indicates that path tracing needs to be conducted on five switches. In our paper, we used N= 5, 36, 59.
 
 - Start Mininet.
 
@@ -40,7 +40,7 @@ Generate results using:
 
 where 5 indicates the length of path. The results can be found under final_results/5. There
 will be three files, indicating the average, median and tail number of packets required to conduct
-path tracing for path length of 5.
+path tracing for path length of 5. This will also contain results for ASM and PPM techniques.
 
 # Running PINT for delay quantiles
 
@@ -67,4 +67,4 @@ processed data is present in experiments/delays/processed_data
 
 `python generate_delay_results.py`
 
-This generates the average, median and tail latencies in final_results/delays.
+This generates the average, median and tail latencies in final_results/delays. 
