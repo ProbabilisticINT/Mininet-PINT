@@ -194,6 +194,54 @@ control MyIngress(inout headers hdr,
 								hdr.ipv4.hdrChecksum=(bit<16>)meta.switch_id;
 						}
 				}
+				//Decider hash ASM
+				hash(meta.decider_hash_asm, HashAlgorithm.crc32, (bit<1>)0, {hdr.ipv4.identification},(bit<32>)7);
+
+				hash(meta.asm_hash_1, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+1},(bit<48>)100);
+				hash(meta.asm_hash_2, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+2},(bit<48>)100);
+				hash(meta.asm_hash_3, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+3},(bit<48>)100);
+				hash(meta.asm_hash_4, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+4},(bit<48>)100);
+				hash(meta.asm_hash_5, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+5},(bit<48>)100);
+				hash(meta.asm_hash_6, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+6},(bit<48>)100);
+				hash(meta.asm_hash_7, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+7},(bit<48>)100);
+				hash(meta.asm_hash_8, HashAlgorithm.crc32, (bit<32>)0, {meta.switch_id+8},(bit<48>)100);
+
+				if (meta.global_hash<meta.approximation){
+					hdr.ipv4.hdrChecksum=(bit<16>)meta.switch_id;
+					if (meta.decider_hash_asm==0){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_1<<3)+((bit<16>)meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==1){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_2<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==2){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_3<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==3){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_4<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==4){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_5<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==5){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_6<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==6){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_7<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+					if (meta.decider_hash_asm==7){
+						bit<16> final_asm_hash=((bit<16>)meta.asm_hash_8<<3)+((bit<16>) meta.decider_hash_asm);
+						hdr.ethernet.srcAddr=(bit<48>)final_asm_hash;
+					}
+				}
+
 				hdr.ipv4.ttl=hdr.ipv4.ttl-1;
 
 		}

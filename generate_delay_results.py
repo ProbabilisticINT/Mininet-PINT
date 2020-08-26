@@ -13,7 +13,7 @@ import glob
 
 
 sketch_size=100
-packets_range=list(range(1000,1100,100))
+packets_range=list(range(100,1100,100))
 pint_packets={}
 all_packets={}
 approx={}

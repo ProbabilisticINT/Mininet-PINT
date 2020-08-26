@@ -8,6 +8,7 @@ import sys
 import socket
 import os
 import numpy as np
+import random
 
 exp_name=sys.argv[1]
 
@@ -41,6 +42,14 @@ for max_bit_range in [255,8,1]:
 	final_results_avg={}
 	final_results_median={}
 	final_results_tail={}
+
+	asm_5_final_results_avg={}
+	asm_5_final_results_median={}
+	asm_5_final_results_tail={}
+
+	asm_6_final_results_avg={}
+	asm_6_final_results_median={}
+	asm_6_final_results_tail={}
 	os.system("mkdir -p final_results/"+exp_name+"/avg")
 	os.system("mkdir -p final_results/"+exp_name+"/median")
 	os.system("mkdir -p final_results/"+exp_name+"/tail")
@@ -53,18 +62,30 @@ for max_bit_range in [255,8,1]:
 		distance_metric={}
 		xor_locations={}
 		hop_location={}
+
+		asm_agreeing_hashes_5={}
+		asm_agreeing_hashes_6={}
+		asm_packets_5=0
+		asm_packets_6=0
+		asm_results_5=[]
+		asm_results_6=[]
+
+		all_sampling_distances=set()
 		packet_count=0
 		results=[]
 
 		f=open("experiments/"+exp_name+"/"+str(len(new_path))+"/255_1000000","r")
 		for line in f:
 			packet_count=packet_count+1
+			asm_packets_5=asm_packets_5+1
+			asm_packets_6=asm_packets_6+1
 			try:
 				data=line.strip().split(",")
 				data=[int(x) for x in data]
 				total_packets=data[0]
 				ttl=data[1]
 				pkt_id=int(data[2])
+				asm_hash=int(data[3])
 				digest=int(data[4])
 				actual_switch_id=int(data[5])
 			except:
@@ -90,7 +111,6 @@ for max_bit_range in [255,8,1]:
 					digest=digest_2
 				if max_bit_range==1:
 					digest=digest_3
-
 				global_hash_check=(zlib.crc32(struct.pack("!HI",pkt_id, k_val))& 0xffffffff)%global_hash_range
 				while global_hash_check>global_hash_range/k_val:
 					k_val=k_val-1
@@ -100,6 +120,54 @@ for max_bit_range in [255,8,1]:
 					distance_metric[k_val]=set()
 
 				distance_metric[k_val].add((digest,pkt_id,actual_switch_id))
+
+				sampling_distance=k_val-1
+				if max_bit_range==255:
+					all_sampling_distances.add(sampling_distance)
+					asm_hash='{:048b}'.format(asm_hash)
+					asm_hash=asm_hash[32:]
+					hash_function=int(asm_hash[13:],2)+1
+					asm_hash=int(asm_hash[0:13],2)
+
+					if sampling_distance not in asm_agreeing_hashes_5:
+						asm_agreeing_hashes_5[sampling_distance]=set()
+					if sampling_distance not in asm_agreeing_hashes_6:
+						asm_agreeing_hashes_6[sampling_distance]=set()
+					all_hashes=[]
+
+
+					for switch_id_check in range(0,len(new_path)):
+						specific_hash_check=(zlib.crc32(struct.pack("!I", switch_id_check+hash_function))& 0xffffffff)%100
+						if specific_hash_check==asm_hash and sampling_distance==actual_switch_id:
+							asm_agreeing_hashes_5[sampling_distance].add(hash_function)
+							asm_agreeing_hashes_6[sampling_distance].add(hash_function)
+
+
+
+					total_check_5=0
+					total_check_6=0
+
+					for sid in range(0,len(new_path)):
+						if sid in asm_agreeing_hashes_5:
+							if len(asm_agreeing_hashes_5[sid])>=5:
+								total_check_5=total_check_5+1
+						if sid in asm_agreeing_hashes_6:
+							if len(asm_agreeing_hashes_6[sid])>=6:
+								total_check_6=total_check_6+1
+
+					if total_check_5==len(new_path):
+						asm_results_5.append(asm_packets_5)
+						asm_packets_5=0
+						asm_agreeing_hashes_5={}
+
+					if total_check_6==len(new_path):
+						asm_results_6.append(asm_packets_6)
+						asm_packets_6=0
+						asm_agreeing_hashes_6={}
+				###################################
+
+
+
 
 				hop_location={}
 				for k_val,all_data in distance_metric.iteritems():
@@ -199,7 +267,28 @@ for max_bit_range in [255,8,1]:
 		final_results_avg[len(new_path)][0]=str(round(sum(results)/float(len(results)),2))
 		final_results_median[len(new_path)][0]=str(round(np.median(results),2))
 		final_results_tail[len(new_path)][0]=str(round(np.percentile(results, 99),2))
+
+		if max_bit_range==255:
+			if len(asm_results_5)!=0:
+				asm_5_final_results_avg[len(new_path)]=["0"]
+				asm_5_final_results_median[len(new_path)]=["0"]
+				asm_5_final_results_tail[len(new_path)]=["0"]
+				asm_5_final_results_avg[len(new_path)][0]=str(round(sum(asm_results_5)/float(len(asm_results_5)),2))
+				asm_5_final_results_median[len(new_path)][0]=str(round(np.median(asm_results_5),2))
+				asm_5_final_results_tail[len(new_path)][0]=str(round(np.percentile(asm_results_5, 99),2))
+
+			if len(asm_results_6)!=0:
+				asm_6_final_results_avg[len(new_path)]=["0"]
+				asm_6_final_results_median[len(new_path)]=["0"]
+				asm_6_final_results_tail[len(new_path)]=["0"]
+				asm_6_final_results_avg[len(new_path)][0]=str(round(sum(asm_results_6)/float(len(asm_results_6)),2))
+				asm_6_final_results_median[len(new_path)][0]=str(round(np.median(asm_results_6),2))
+				asm_6_final_results_tail[len(new_path)][0]=str(round(np.percentile(asm_results_6, 99),2))
+
+
+
 		iterations=iterations-1
+
 	bit_map={255: "PINT8", 8: "PINT4", 1: "PINT1"}
 	final_results_avg = sorted(final_results_avg.items(), key=operator.itemgetter(0))
 	fw = open("final_results/"+exp_name+"/avg/"+str(bit_map[max_bit_range]),"w")
@@ -218,3 +307,93 @@ for max_bit_range in [255,8,1]:
 	for item in final_results_tail:
 		fw.write(str(item[0])+","+",".join(item[1])+"\n")
 	fw.close()
+	if max_bit_range==255:
+		asm_5_final_results_avg = sorted(asm_5_final_results_avg.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/avg/asm_5","w")
+		for item in asm_5_final_results_avg:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		asm_5_final_results_median = sorted(asm_5_final_results_median.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/median/asm_5","w")
+		for item in asm_5_final_results_median:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		asm_5_final_results_tail = sorted(asm_5_final_results_tail.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/tail/asm_5","w")
+		for item in asm_5_final_results_tail:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		asm_6_final_results_avg = sorted(asm_6_final_results_avg.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/avg/asm_6","w")
+		for item in asm_6_final_results_avg:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		asm_6_final_results_median = sorted(asm_6_final_results_median.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/median/asm_6","w")
+		for item in asm_6_final_results_median:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		asm_6_final_results_tail = sorted(asm_6_final_results_tail.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/tail/asm_6","w")
+		for item in asm_6_final_results_tail:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+		final_results_asm=[]
+
+		num_of_fragments=8
+		runs=100
+		k = int(exp_name)
+		ppm_final_results_avg={}
+		ppm_final_results_median={}
+		ppm_final_results_tail={}
+		while True:
+			if k==1:
+				break
+			ppm_final_results=[]
+			for run in xrange(runs):
+				results={}
+				for p in xrange(5000):
+					samplingDistance = int(random.randint(0,(k-1)))
+					samplingFragment = random.randint(0,num_of_fragments-1)
+					if samplingDistance not in results:
+						results[samplingDistance]=set()
+					results[samplingDistance].add(samplingFragment)
+					if len(results)==k:
+						check=0
+						for key,value in results.iteritems():
+							if len(value)==num_of_fragments:
+								check=check+1
+						if check==k:
+							ppm_final_results.append(p)
+							break
+
+			ppm_final_results_avg[k]=["0"]
+			ppm_final_results_median[k]=["0"]
+			ppm_final_results_tail[k]=["0"]
+			ppm_final_results_avg[k][0]=str(round(sum(ppm_final_results)/float(len(ppm_final_results)),2))
+			ppm_final_results_median[k][0]=str(round(np.median(ppm_final_results),2))
+			ppm_final_results_tail[k][0]=str(round(np.percentile(ppm_final_results, 99),2))
+			k=k-1
+
+		ppm_final_results_avg = sorted(ppm_final_results_avg.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/avg/ppm","w")
+		for item in ppm_final_results_avg:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		ppm_final_results_median = sorted(ppm_final_results_median.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/median/ppm","w")
+		for item in ppm_final_results_median:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()
+
+		ppm_final_results_tail = sorted(ppm_final_results_tail.items(), key=operator.itemgetter(0))
+		fw = open("final_results/"+exp_name+"/tail/ppm","w")
+		for item in ppm_final_results_median:
+			fw.write(str(item[0])+","+",".join(item[1])+"\n")
+		fw.close()

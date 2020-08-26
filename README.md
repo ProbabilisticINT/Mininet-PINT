@@ -51,7 +51,7 @@ path tracing for path length of 5.
 ## Setting up Python 3.7.5 in Mininet VM
 
 - Install Miniconda: https://docs.conda.io/en/latest/miniconda.html
-- Create a new Python 3.7.5 envronment.
+- Create a new Python 3.7.5 environment.
 - Run PINT for delay quantiles in that environment.
 
 ## Steps to run PINT for delay quantiles
